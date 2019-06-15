@@ -13,10 +13,73 @@ export default Draggable => {
     };
 
     state = {
-      isDragging: false
+      animationDuration: 500,
+      isDragging: false,
+      isAnimatingDown: 0,
+      isAnimatingUp: 0
     };
 
     draggable = createRef();
+
+    componentDidUpdate(prevProps) {
+      this.handleAnimation(prevProps);
+    }
+
+    handleAnimation(prevProps) {
+      const { position } = this.props;
+      let animationDirection = null;
+
+      if (position > prevProps.position) {
+        animationDirection = 'Down';
+      }
+
+      if (position < prevProps.position) {
+        animationDirection = 'Up';
+      }
+
+      if (!animationDirection) {
+        return null;
+      }
+
+      const animationKey = `isAnimating${animationDirection}`;
+
+      this.setState({ [animationKey]: 1 }, () => {
+        this.setState({ [animationKey]: 2 });
+        setTimeout(() => {
+          this.setState({ [animationKey]: 0 });
+        }, this.state.animationDuration);
+      });
+    }
+
+    getComponentStyles() {
+      const height = this.draggable.current
+        ? this.draggable.current.clientHeight
+        : 0;
+
+      const {
+        data: { backgroundColor, isEmpty }
+      } = this.props;
+
+      const styles = {
+        backgroundColor,
+        opacity: this.state.isDragging || isEmpty ? 0 : 1
+      };
+
+      if (this.state.isAnimatingDown === 1) {
+        styles.transform = `translateY(-${height}px)`;
+      }
+
+      if (this.state.isAnimatingUp === 1) {
+        styles.transform = `translateY(${height}px)`;
+      }
+
+      if (this.state.isAnimatingDown === 2 || this.state.isAnimatingUp === 2) {
+        styles.transform = 'translateY(0px)';
+        styles.transition = `transform ${this.state.animationDuration}ms ease`;
+      }
+
+      return styles;
+    }
 
     // Draggable Target
 
@@ -59,17 +122,10 @@ export default Draggable => {
     };
 
     render() {
-      const {
-        data: { backgroundColor, isEmpty }
-      } = this.props;
-
       return (
         <div
           className="drag-wrapper"
-          style={{
-            backgroundColor,
-            opacity: this.state.isDragging || isEmpty ? 0 : 1
-          }}
+          style={this.getComponentStyles()}
           draggable={true}
           ref={this.draggable}
           onDrop={this.onDrop}

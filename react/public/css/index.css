@@ -118,6 +118,7 @@
 .drag-wrapper {
   position: relative;
   background: url('../img/handle.svg') right 20px center no-repeat;
+  transition: opacity 0.25s ease;
   cursor: grab;
 }
 
